@@ -37,6 +37,31 @@ namespace Taller3_API_Rest.Controllers
 
             return Ok(new { IsHoliday = false });
         }
-    }
 
+        [HttpGet("get-holidays")]
+        public async Task<IActionResult> GetHolidays([FromQuery] int year)
+        {
+            if (year < 1900 || year > 2100)
+            {
+                return BadRequest("El año proporcionado no es válido.");
+            }
+
+            var holidays = await _context.Holidays.ToListAsync();
+            var holidayDates = holidays
+                .Select(h => new
+                {
+                    h.Name,
+                    Date = HolidayCalculator.CalculateHolidayDate(h, year)
+                })
+                .Where(h => h.Date.HasValue)
+                .Select(h => new
+                {
+                    h.Name,
+                    Date = h.Date.Value.ToString("dd/MM/yyyy")
+                })
+                .ToList();
+
+            return Ok(holidayDates);
+        }
+    }
 }
